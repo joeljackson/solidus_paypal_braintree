@@ -72,16 +72,23 @@ SolidusPaypalBraintree.PaypalButton.prototype._tokenizeCallback = function(token
  * @param {object} payload - The payload returned by Braintree after tokenization
  */
 SolidusPaypalBraintree.PaypalButton.prototype._transactionParams = function(payload) {
-  return {
+  var params = {
     "payment_method_id" : this._paymentMethodId,
+    "state" : "complete",
     "transaction" : {
       "email" : payload.details.email,
       "phone" : payload.details.phone,
       "nonce" : payload.nonce,
-      "payment_type" : payload.type,
-      "address_attributes" : this._addressParams(payload)
-    }
+      "payment_type" : payload.type
+     }
   }
+
+  var address_attributes = this._addressParams(payload);
+  if(address_attributes) {
+    params["transaction"]["address_attributes"] = address_attributes;
+  }
+
+  return params;
 };
 
 /**
@@ -93,6 +100,10 @@ SolidusPaypalBraintree.PaypalButton.prototype._transactionParams = function(payl
 SolidusPaypalBraintree.PaypalButton.prototype._addressParams = function(payload) {
   var first_name, last_name;
   var payload_address = payload.details.shippingAddress || payload.details.billingAddress;
+
+  if(!payload_address) {
+    return null;
+  }
 
   if (payload_address.recipientName) {
     first_name = payload_address.recipientName.split(" ")[0];

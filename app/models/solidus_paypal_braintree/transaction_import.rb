@@ -72,11 +72,16 @@ module SolidusPaypalBraintree
     protected
 
     def advance_order(payment, end_state)
-      return if state_before_current?(end_state)
+      if end_state == "complete"
+        update_payment_total(payment)
+        order.complete
+      else
+        return if state_before_current?(end_state)
 
-      until order.state == end_state
-        order.next!
-        update_payment_total(payment) if order.payment?
+        until order.state == end_state
+          order.next!
+          update_payment_total(payment) if order.payment?
+        end
       end
     end
 
